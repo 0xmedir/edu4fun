@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import ModuleForm from "@/components/ModuleForm";
 import LessonForm from "@/components/LessonForm";
+import BulkImportForm from "@/components/BulkImportForm";
 import { notFound } from "next/navigation";
 
 export default async function CourseDetailPage({
@@ -31,6 +32,8 @@ export default async function CourseDetailPage({
         <h1 className="text-3xl font-semibold">{course.title}</h1>
         {course.description && <p className="text-ink/60 mt-2">{course.description}</p>}
       </div>
+
+      <BulkImportForm courseId={course.id} />
 
       <ModuleForm courseId={course.id} />
 

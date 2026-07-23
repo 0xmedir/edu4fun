@@ -85,3 +85,56 @@ export async function createLesson(
 
   redirect(`/admin/courses/${course_id}`);
 }
+
+import { parseCourseOutline } from "@/lib/parseCourseOutline";
+
+export async function bulkImportOutline(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const supabase = createClient();
+  const course_id = String(formData.get("course_id") || "");
+  const raw = String(formData.get("outline") || "");
+
+  if (!course_id) return { error: "Missing course." };
+
+  const modules = parseCourseOutline(raw);
+  if (!modules.length) {
+    return {
+      error: "Couldn't find any '## Week N: Title' headers — check the format in the example below.",
+    };
+  }
+
+  for (const [index, mod] of modules.entries()) {
+    const { data: insertedModule, error: modError } = await supabase
+      .from("modules")
+      .insert({
+        course_id,
+        title: mod.title,
+        week_number: mod.week_number ?? index + 1,
+        learning_objectives: mod.learning_objectives,
+        order_index: mod.week_number ?? index + 1,
+      })
+      .select("id")
+      .single();
+
+    if (modError || !insertedModule) {
+      return { error: `Failed on module "${mod.title}": ${modError?.message}` };
+    }
+
+    for (const [lIndex, lesson] of mod.lessons.entries()) {
+      const { error: lessonError } = await supabase.from("lessons").insert({
+        module_id: insertedModule.id,
+        title: lesson.title,
+        content_richtext: lesson.content_html,
+        video_url: lesson.video_url,
+        order_index: lIndex,
+      });
+      if (lessonError) {
+        return { error: `Module "${mod.title}" saved, but lesson "${lesson.title}" failed: ${lessonError.message}` };
+      }
+    }
+  }
+
+  redirect(`/admin/courses/${course_id}`);
+}
