@@ -34,7 +34,7 @@ export default async function StudentCoursePage({
         <p className="text-sm text-ink/50">{course.semester} · {course.credit_hours} credit hours</p>
         <h1 className="text-3xl font-semibold">{course.title}</h1>
         {course.description && <p className="text-ink/60 mt-2">{course.description}</p>}
-        <div className="flex gap-4 mt-3">
+        <div className="flex gap-3 mt-3 flex-wrap">
           {course.syllabus_url && (
             <a href={course.syllabus_url} target="_blank" className="text-sm text-gold underline">
               View full syllabus
@@ -45,6 +45,9 @@ export default async function StudentCoursePage({
               Take Quiz
             </Link>
           )}
+          <Link href={`/courses/${course.id}/discussion`} className="text-sm bg-goldsoft text-ink rounded-panel px-4 py-1.5 font-medium hover:opacity-80">
+            Discussion
+          </Link>
         </div>
       </div>
 
