@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -34,11 +35,16 @@ export default async function DashboardPage() {
         ) : (
           <ul className="space-y-3">
             {courses.map((c) => (
-              <li key={c.id} className="border border-line rounded-panel p-4 bg-white">
-                <p className="font-medium">{c.title}</p>
-                <p className="text-sm text-ink/50">
-                  {c.semester} · {c.credit_hours} credit hours
-                </p>
+              <li key={c.id}>
+                <Link
+                  href={`/courses/${c.id}`}
+                  className="block border border-line rounded-panel p-4 bg-white hover:border-gold transition"
+                >
+                  <p className="font-medium">{c.title}</p>
+                  <p className="text-sm text-ink/50">
+                    {c.semester} · {c.credit_hours} credit hours
+                  </p>
+                </Link>
               </li>
             ))}
           </ul>
