@@ -1,7 +1,8 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 // Use this inside Server Components, Server Actions, and Route Handlers.
+// Respects the logged-in user's session and RLS policies.
 export function createClient() {
   const cookieStore = cookies();
 
@@ -13,14 +14,14 @@ export function createClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Called from a Server Component with no write access —
-            // safe to ignore, middleware handles session refresh.
+            // Called from a Server Component with no write access — safe to
+            // ignore because middleware handles session refresh.
           }
         },
       },

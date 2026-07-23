@@ -1,8 +1,6 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Routes reachable WITHOUT a logged-in session.
-// Everything else redirects to "/" (the access-code gate).
 const PUBLIC_PATHS = ["/", "/redeem"];
 
 export async function middleware(request: NextRequest) {
@@ -16,7 +14,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
@@ -42,8 +40,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Admin-only area — checked again with real RLS server-side,
-  // this is just a fast redirect for a bad route guess.
   if (user && path.startsWith("/admin")) {
     const { data: profile } = await supabase
       .from("users")
