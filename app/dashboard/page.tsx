@@ -23,14 +23,19 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
         <div>
           <p className="text-sm text-ink/50 mb-1">Welcome back</p>
           <h1 className="text-3xl font-semibold">{profile?.full_name ?? user.email}</h1>
         </div>
-        <Link href="/grades" className="text-sm bg-goldsoft text-ink rounded-panel px-4 py-2 font-medium hover:opacity-80">
-          View Grades
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/messages" className="text-sm bg-goldsoft text-ink rounded-panel px-4 py-2 font-medium hover:opacity-80">
+            Messages
+          </Link>
+          <Link href="/grades" className="text-sm bg-goldsoft text-ink rounded-panel px-4 py-2 font-medium hover:opacity-80">
+            Grades
+          </Link>
+        </div>
       </div>
 
       <section>
