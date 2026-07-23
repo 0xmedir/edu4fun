@@ -16,12 +16,20 @@ export default async function DiscussionPage({ params }: { params: { id: string 
 
   const channelId = await getOrCreateGlobalChannel(course.id);
 
-  const { data: messages } = await supabase
+  const { data: rawMessages } = await supabase
     .from("messages")
-    .select("id, content, sender_id, created_at")
+    .select("id, content, sender_id, created_at, users(full_name)")
     .eq("channel_id", channelId)
     .order("created_at", { ascending: true })
     .limit(100);
+
+  const messages = (rawMessages ?? []).map((m: any) => ({
+    id: m.id,
+    content: m.content,
+    sender_id: m.sender_id,
+    created_at: m.created_at,
+    sender_name: m.users?.full_name ?? null,
+  }));
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-2xl mx-auto space-y-4">
@@ -31,7 +39,7 @@ export default async function DiscussionPage({ params }: { params: { id: string 
         channelId={channelId}
         path={`/courses/${course.id}/discussion`}
         currentUserId={user.id}
-        initialMessages={messages ?? []}
+        initialMessages={messages}
       />
     </main>
   );
