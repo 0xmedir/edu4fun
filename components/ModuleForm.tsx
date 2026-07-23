@@ -2,6 +2,7 @@
 
 import { useFormState } from "react-dom";
 import { createModule, type FormState } from "@/app/actions/courses";
+import SubmitButton from "@/components/SubmitButton";
 
 const initial: FormState = {};
 
@@ -23,9 +24,9 @@ export default function ModuleForm({ courseId }: { courseId: string }) {
         className="w-full border border-line rounded-panel px-3 py-2 text-sm"
       />
       {state?.error && <p className="text-rust text-xs">{state.error}</p>}
-      <button type="submit" className="text-sm bg-goldsoft text-ink rounded-panel px-3 py-1.5 font-medium hover:opacity-80">
+      <SubmitButton className="text-sm bg-goldsoft text-ink rounded-panel px-3 py-1.5 font-medium hover:opacity-80">
         Add module
-      </button>
+      </SubmitButton>
     </form>
   );
 }

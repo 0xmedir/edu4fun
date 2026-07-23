@@ -2,6 +2,7 @@
 
 import { useFormState } from "react-dom";
 import { createCourse, type FormState } from "@/app/actions/courses";
+import SubmitButton from "@/components/SubmitButton";
 
 const initial: FormState = {};
 
@@ -30,9 +31,9 @@ export default function CourseForm() {
         </div>
       </div>
       {state?.error && <p className="text-rust text-sm">{state.error}</p>}
-      <button type="submit" className="bg-gold text-white rounded-panel px-4 py-2 font-medium hover:opacity-90">
+      <SubmitButton className="bg-gold text-white rounded-panel px-4 py-2 font-medium hover:opacity-90">
         Create course
-      </button>
+      </SubmitButton>
     </form>
   );
 }

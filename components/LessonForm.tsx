@@ -3,6 +3,7 @@
 import { useFormState } from "react-dom";
 import { createLesson, type FormState } from "@/app/actions/courses";
 import RichTextEditor from "@/components/RichTextEditor";
+import SubmitButton from "@/components/SubmitButton";
 
 const initial: FormState = {};
 
@@ -23,9 +24,9 @@ export default function LessonForm({
       <input name="video_url" placeholder="YouTube/Vimeo URL (optional)" className="w-full border border-line rounded-panel px-3 py-2 text-sm bg-white" />
       <RichTextEditor name="content_richtext" />
       {state?.error && <p className="text-rust text-xs">{state.error}</p>}
-      <button type="submit" className="text-sm bg-gold text-white rounded-panel px-3 py-1.5 font-medium hover:opacity-90">
+      <SubmitButton className="text-sm bg-gold text-white rounded-panel px-3 py-1.5 font-medium hover:opacity-90">
         Add lesson
-      </button>
+      </SubmitButton>
     </form>
   );
 }
