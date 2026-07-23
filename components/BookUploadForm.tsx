@@ -15,7 +15,8 @@ export default function BookUploadForm() {
       <input name="title" placeholder="Title" required className="w-full border border-line rounded-panel px-3 py-2 text-sm" />
       <input name="author" placeholder="Author (optional)" className="w-full border border-line rounded-panel px-3 py-2 text-sm" />
       <input name="tags" placeholder="Subject tags, comma separated (e.g. Calculus, Economics)" className="w-full border border-line rounded-panel px-3 py-2 text-sm" />
-      <input name="file" type="file" accept=".pdf,.epub" required className="w-full text-sm" />
+      <input name="file" type="file" required className="w-full text-sm" />
+      <p className="text-xs text-ink/40">PDF, EPUB, or DOCX only — other file types will be rejected after upload.</p>
       {state?.error && <p className="text-rust text-xs">{state.error}</p>}
       <SubmitButton className="text-sm bg-gold text-white rounded-panel px-4 py-2 font-medium hover:opacity-90">
         Upload

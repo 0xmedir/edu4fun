@@ -6,6 +6,12 @@ import { revalidatePath } from "next/cache";
 
 export type LibraryFormState = { error?: string };
 
+const ALLOWED_TYPES = [
+  "application/pdf",
+  "application/epub+zip",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+];
+
 export async function uploadBook(
   _prev: LibraryFormState,
   formData: FormData
@@ -24,8 +30,8 @@ export async function uploadBook(
   if (!title) return { error: "Title is required." };
   if (!file || file.size === 0) return { error: "Choose a file to upload." };
   if (file.size > 10 * 1024 * 1024) return { error: "File is larger than 10MB." };
-  if (!["application/pdf", "application/epub+zip"].includes(file.type)) {
-    return { error: "Only PDF or EPUB files are supported." };
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return { error: "Only PDF, EPUB, or DOCX files are supported." };
   }
 
   const admin = createAdminClient();
