@@ -13,16 +13,18 @@ export default async function GradingPage({ params }: { params: { questionId: st
     .single();
   if (!question) notFound();
 
-  // RLS ensures this returns null/empty for non-staff — never exposed to students.
   const { data: answerKey } = await supabase
     .from("answer_keys")
     .select("instructor_answer")
     .eq("question_id", question.id)
     .maybeSingle();
 
-  const { data: submissions } = await supabase
+  // "users!user_id" disambiguates the join — submissions has two FKs to users
+  // (user_id and graded_by), so an unqualified "users(...)" is ambiguous and
+  // silently fails the whole query.
+  const { data: submissions, error: submissionsError } = await supabase
     .from("submissions")
-    .select("id, answer_text, score, user_id, users(full_name)")
+    .select("id, answer_text, score, user_id, users!user_id(full_name)")
     .eq("question_id", question.id)
     .not("answer_text", "is", null);
 
@@ -36,6 +38,10 @@ export default async function GradingPage({ params }: { params: { questionId: st
           <p className="text-xs font-medium text-ink/60 mb-1">Instructor Answer Key (staff only)</p>
           <p className="text-sm">{answerKey.instructor_answer}</p>
         </div>
+      )}
+
+      {submissionsError && (
+        <p className="text-rust text-xs">Debug: {submissionsError.message}</p>
       )}
 
       <div className="space-y-4">
