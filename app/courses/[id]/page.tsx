@@ -23,17 +23,29 @@ export default async function StudentCoursePage({
     .eq("course_id", course.id)
     .order("week_number", { ascending: true });
 
+  const { count: questionCount } = await supabase
+    .from("questions")
+    .select("id", { count: "exact", head: true })
+    .eq("course_id", course.id);
+
   return (
     <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto space-y-8">
       <div>
         <p className="text-sm text-ink/50">{course.semester} · {course.credit_hours} credit hours</p>
         <h1 className="text-3xl font-semibold">{course.title}</h1>
         {course.description && <p className="text-ink/60 mt-2">{course.description}</p>}
-        {course.syllabus_url && (
-          <a href={course.syllabus_url} target="_blank" className="text-sm text-gold underline mt-2 inline-block">
-            View full syllabus
-          </a>
-        )}
+        <div className="flex gap-4 mt-3">
+          {course.syllabus_url && (
+            <a href={course.syllabus_url} target="_blank" className="text-sm text-gold underline">
+              View full syllabus
+            </a>
+          )}
+          {(questionCount ?? 0) > 0 && (
+            <Link href={`/courses/${course.id}/quiz`} className="text-sm bg-gold text-white rounded-panel px-4 py-1.5 font-medium hover:opacity-90">
+              Take Quiz
+            </Link>
+          )}
+        </div>
       </div>
 
       <section className="space-y-4">
