@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import LibraryBrowser from "@/components/LibraryBrowser";
+import NavBar from "@/components/NavBar";
 
 export default async function LibraryPage() {
   const supabase = createClient();
@@ -22,9 +23,12 @@ export default async function LibraryPage() {
   }));
 
   return (
-    <main className="min-h-screen px-6 py-10 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-3xl font-semibold">Tutorial Library</h1>
-      <LibraryBrowser books={books} />
-    </main>
+    <>
+      <NavBar />
+      <main className="min-h-screen px-6 py-10 max-w-2xl mx-auto space-y-6">
+        <h1 className="text-3xl font-semibold">Tutorial Library</h1>
+        <LibraryBrowser books={books} />
+      </main>
+    </>
   );
 }

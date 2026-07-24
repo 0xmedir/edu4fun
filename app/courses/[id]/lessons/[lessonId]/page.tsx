@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -27,6 +28,13 @@ export default async function LessonPage({
 
   const embedUrl = lesson.video_url ? toEmbedUrl(lesson.video_url) : null;
 
+  let pdfDownloadUrl: string | null = null;
+  if (lesson.pdf_url) {
+    const admin = createAdminClient();
+    const { data } = await admin.storage.from("library").createSignedUrl(lesson.pdf_url, 300);
+    pdfDownloadUrl = data?.signedUrl ?? null;
+  }
+
   return (
     <main className="min-h-screen px-6 py-10 max-w-2xl mx-auto space-y-6">
       <Link href={`/courses/${params.id}`} className="text-sm text-ink/50 hover:text-gold">
@@ -53,9 +61,9 @@ export default async function LessonPage({
         />
       )}
 
-      {lesson.pdf_url && (
+      {pdfDownloadUrl && (
         <a
-          href={lesson.pdf_url}
+          href={pdfDownloadUrl}
           target="_blank"
           className="inline-block text-sm bg-goldsoft text-ink rounded-panel px-4 py-2 font-medium hover:opacity-80"
         >

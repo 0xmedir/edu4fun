@@ -23,6 +23,10 @@ export default function LessonForm({
       <input name="title" placeholder="Lesson title" required className="w-full border border-line rounded-panel px-3 py-2 text-sm bg-white" />
       <input name="video_url" placeholder="YouTube/Vimeo URL (optional)" className="w-full border border-line rounded-panel px-3 py-2 text-sm bg-white" />
       <RichTextEditor name="content_richtext" />
+      <div>
+        <label className="block text-xs text-ink/50 mb-1">PDF attachment (optional)</label>
+        <input name="pdf_file" type="file" accept=".pdf" className="w-full text-sm" />
+      </div>
       {state?.error && <p className="text-rust text-xs">{state.error}</p>}
       <SubmitButton className="text-sm bg-gold text-white rounded-panel px-3 py-1.5 font-medium hover:opacity-90">
         Add lesson

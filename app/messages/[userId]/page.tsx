@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ChatRoom from "@/components/ChatRoom";
+import NavBar from "@/components/NavBar";
 import { getOrCreateDM } from "@/app/actions/messages";
 
 export default async function DMPage({ params }: { params: { userId: string } }) {
@@ -36,15 +37,18 @@ export default async function DMPage({ params }: { params: { userId: string } })
   }));
 
   return (
-    <main className="min-h-screen px-6 py-10 max-w-2xl mx-auto space-y-4">
-      <Link href="/messages" className="text-sm text-ink/50 hover:text-gold">← All messages</Link>
-      <h1 className="text-2xl font-semibold">{otherUser.full_name}</h1>
-      <ChatRoom
-        channelId={channelId}
-        path={`/messages/${otherUser.id}`}
-        currentUserId={user.id}
-        initialMessages={messages}
-      />
-    </main>
+    <>
+      <NavBar />
+      <main className="min-h-screen px-6 py-10 max-w-2xl mx-auto space-y-4">
+        <Link href="/messages" className="text-sm text-ink/50 hover:text-gold">← All messages</Link>
+        <h1 className="text-2xl font-semibold">{otherUser.full_name}</h1>
+        <ChatRoom
+          channelId={channelId}
+          path={`/messages/${otherUser.id}`}
+          currentUserId={user.id}
+          initialMessages={messages}
+        />
+      </main>
+    </>
   );
 }

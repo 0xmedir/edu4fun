@@ -6,12 +6,23 @@ import SubmitButton from "@/components/SubmitButton";
 
 const initial: FormState = {};
 
-export default function CourseForm() {
+type Department = { id: string; name: string };
+
+export default function CourseForm({ departments }: { departments: Department[] }) {
   const [state, formAction] = useFormState(createCourse, initial);
 
   return (
     <form action={formAction} className="space-y-4 bg-white border border-line rounded-panel p-6">
       <h3 className="font-semibold">New course</h3>
+      <div>
+        <label className="block text-sm font-medium mb-1">Department</label>
+        <select name="department_id" className="w-full border border-line rounded-panel px-3 py-2">
+          <option value="">— None —</option>
+          {departments.map((d) => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+      </div>
       <div>
         <label className="block text-sm font-medium mb-1">Title</label>
         <input name="title" required className="w-full border border-line rounded-panel px-3 py-2" />
