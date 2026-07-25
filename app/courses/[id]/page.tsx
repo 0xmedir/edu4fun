@@ -24,10 +24,29 @@ export default async function StudentCoursePage({
     .eq("course_id", course.id)
     .order("week_number", { ascending: true });
 
-  const { count: questionCount } = await supabase
-    .from("questions")
-    .select("id", { count: "exact", head: true })
-    .eq("course_id", course.id);
+  // Check if there's a quiz for this course (via module with order_index=1)
+  const { data: module } = await supabase
+    .from("modules")
+    .select("id")
+    .eq("course_id", course.id)
+    .eq("order_index", 1)
+    .maybeSingle();
+
+  let hasQuiz = false;
+  if (module) {
+    const { data: quiz } = await supabase
+      .from("quizzes")
+      .select("id")
+      .eq("module_id", module.id)
+      .maybeSingle();
+    if (quiz) {
+      const { count } = await supabase
+        .from("quiz_questions")
+        .select("id", { count: "exact", head: true })
+        .eq("quiz_id", quiz.id);
+      hasQuiz = (count ?? 0) > 0;
+    }
+  }
 
   return (
     <>
@@ -43,7 +62,7 @@ export default async function StudentCoursePage({
                 View full syllabus
               </a>
             )}
-            {(questionCount ?? 0) > 0 && (
+            {hasQuiz && (
               <Link href={`/courses/${course.id}/quiz`} className="text-sm bg-gold text-white rounded-panel px-4 py-1.5 font-medium hover:opacity-90">
                 Take Quiz
               </Link>
