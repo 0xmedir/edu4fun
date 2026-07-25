@@ -18,14 +18,18 @@ export default async function StudentCoursePage({
 
   if (!course) notFound();
 
-  const { data: modules } = await supabase
+  // Fetch modules
+  const { data: modules, error: modulesError } = await supabase
     .from("modules")
-    .select("id, title, week_number, learning_objectives, lessons(id, title)")
+    .select("id, title, week_number, order_index, learning_objectives, lessons(id, title)")
     .eq("course_id", course.id)
-    .order("week_number", { ascending: true });
+    .order("order_index", { ascending: true });
 
-  // Check if there's a quiz for this course (via module with order_index=1)
-  const { data: module } = await supabase
+  // Log to terminal for debugging
+  console.log("Modules for course", course.id, modules, modulesError);
+
+  // Check for quiz (module with order_index = 1)
+  const { data: quizModule } = await supabase
     .from("modules")
     .select("id")
     .eq("course_id", course.id)
@@ -33,11 +37,11 @@ export default async function StudentCoursePage({
     .maybeSingle();
 
   let hasQuiz = false;
-  if (module) {
+  if (quizModule) {
     const { data: quiz } = await supabase
       .from("quizzes")
       .select("id")
-      .eq("module_id", module.id)
+      .eq("module_id", quizModule.id)
       .maybeSingle();
     if (quiz) {
       const { count } = await supabase
@@ -45,6 +49,7 @@ export default async function StudentCoursePage({
         .select("id", { count: "exact", head: true })
         .eq("quiz_id", quiz.id);
       hasQuiz = (count ?? 0) > 0;
+      console.log("Quiz found, questions:", count);
     }
   }
 
@@ -79,7 +84,9 @@ export default async function StudentCoursePage({
           ) : (
             modules.map((m) => (
               <div key={m.id} className="border border-line rounded-panel p-5 bg-white">
-                <p className="text-xs text-ink/50 mb-1">Week {m.week_number ?? "—"}</p>
+                <p className="text-xs text-ink/50 mb-1">
+                  {m.week_number ? `Week ${m.week_number}` : `Unit ${m.order_index}`}
+                </p>
                 <h3 className="font-semibold mb-2">{m.title}</h3>
                 {m.learning_objectives?.length > 0 && (
                   <ul className="text-sm text-ink/60 list-disc list-inside mb-3">
