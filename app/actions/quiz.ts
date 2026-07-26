@@ -21,7 +21,7 @@ export async function submitQuiz(
     return { error: "You must be logged in to submit answers." };
   }
 
-  // Extract answers: keys are answer_<questionId>
+  // Extract answers
   const answers: Record<string, string> = {};
   for (const [key, value] of formData.entries()) {
     if (key.startsWith("answer_")) {
@@ -41,6 +41,7 @@ export async function submitQuiz(
     .eq("quiz_id", quizId);
 
   if (qError || !questions) {
+    console.error("Error fetching questions:", qError);
     return { error: "Failed to fetch questions." };
   }
 
@@ -63,7 +64,7 @@ export async function submitQuiz(
     .upsert(submissions, { onConflict: "user_id, question_id" });
 
   if (insertError) {
-    console.error(insertError);
+    console.error("Insert error:", insertError);
     return { error: "Failed to save your answers. Please try again." };
   }
 
@@ -71,7 +72,7 @@ export async function submitQuiz(
   const correctCount = submissions.filter(s => s.is_correct).length;
   const total = submissions.length;
 
-  // Save grade to grades table (upsert)
+  // Save grade to grades table
   const { error: gradeError } = await supabase
     .from("grades")
     .upsert(
@@ -85,27 +86,44 @@ export async function submitQuiz(
     );
 
   if (gradeError) {
-    console.error(gradeError);
+    console.error("Grade save error:", gradeError);
     return { error: "Failed to save grade." };
   }
 
-  // Delete all submissions for this user/quiz (reset)
-  const { data: questionIds } = await supabase
+  // --- Reset: delete all submissions for this user/quiz ---
+  const { data: questionIds, error: qIdsError } = await supabase
     .from("quiz_questions")
     .select("id")
     .eq("quiz_id", quizId);
-  if (questionIds) {
-    await supabase
-      .from("submissions")
-      .delete()
-      .eq("user_id", user.id)
-      .in("question_id", questionIds.map(q => q.id));
+
+  if (qIdsError) {
+    console.error("Error fetching question IDs for reset:", qIdsError);
+    return { error: "Failed to reset quiz (question fetch error)." };
   }
 
-  // Revalidate paths
+  if (questionIds && questionIds.length > 0) {
+    const { error: deleteError, count } = await supabase
+      .from("submissions")
+      .delete({ count: "exact" })
+      .eq("user_id", user.id)
+      .in("question_id", questionIds.map(q => q.id));
+
+    if (deleteError) {
+      console.error("Delete error:", deleteError);
+      return { error: "Failed to reset quiz (delete error)." };
+    } else {
+      console.log(`✅ Deleted ${count} submissions for quiz ${quizId}`);
+    }
+  } else {
+    console.warn("No questions found for quiz, skipping reset.");
+  }
+
+  // Revalidate and redirect
   revalidatePath(`/courses/${courseId}/quiz`);
   revalidatePath(`/grades`);
 
-  // Redirect back to quiz page (now reset)
-  redirect(`/courses/${courseId}/quiz`);
+  // Add a small delay to ensure the deletion is processed (optional)
+  // await new Promise(resolve => setTimeout(resolve, 500));
+
+  redirect(`/courses/${courseId}/quiz?reset=true`);
 }
