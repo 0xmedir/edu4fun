@@ -105,7 +105,7 @@ export async function submitQuiz(
     .eq("course_id", courseId);
 
   if (courseQuestions && courseQuestions.length > 0) {
-    await supabase
+    const { error: resetError } = await supabase
       .from("submissions")
       .delete()
       .eq("user_id", user.id)
@@ -113,6 +113,14 @@ export async function submitQuiz(
         "question_id",
         courseQuestions.map((q) => q.id)
       );
+
+    if (resetError) {
+      console.error("Reset delete error:", resetError);
+      return {
+        error:
+          "Your score was saved, but the quiz couldn't reset. Contact an admin.",
+      };
+    }
   }
 
   revalidatePath(`/courses/${courseId}/quiz`);
