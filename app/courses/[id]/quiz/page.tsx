@@ -3,7 +3,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import QuizForm from "@/components/QuizForm";
 
-export default async function QuizPage({ params }: { params: { id: string } }) {
+export default async function QuizPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { scored?: string; total?: string };
+}) {
   const supabase = createClient();
   const {
     data: { user },
@@ -33,78 +39,50 @@ export default async function QuizPage({ params }: { params: { id: string } }) {
     );
   }
 
+  // A finished attempt always gets wiped right after grading (see
+  // submitQuiz), so this is normally empty -- it only catches a partial
+  // attempt that never made it through a full submit.
   const { data: submissions } = await supabase
     .from("submissions")
-    .select("question_id, selected_choice_id, is_correct")
+    .select("question_id")
     .eq("user_id", user.id)
-    .in("question_id", questions.map((q) => q.id));
+    .in(
+      "question_id",
+      questions.map((q) => q.id)
+    );
 
   const answeredIds = new Set((submissions ?? []).map((s) => s.question_id));
   const unanswered = questions.filter((q) => !answeredIds.has(q.id));
 
-  const isFullyComplete = unanswered.length === 0;
-
-  if (isFullyComplete) {
-    const { data: questionsWithAnswers } = await supabase
-      .from("questions")
-      .select("id, question_text, question_choices(id, choice_text, is_correct)")
-      .eq("course_id", course.id)
-      .eq("type", "mcq");
-
-    const subByQuestion = new Map(submissions!.map((s) => [s.question_id, s]));
-    const correctCount = submissions!.filter((s) => s.is_correct).length;
-    const percent = Math.round((correctCount / questions.length) * 100);
-
-    return (
-      <main className="min-h-screen px-6 py-10 max-w-2xl mx-auto space-y-6">
-        <Link href={`/courses/${course.id}`} className="text-sm text-ink/50 hover:text-gold">← Back to course</Link>
-        <h1 className="text-3xl font-semibold">{course.title} — Quiz Results</h1>
-        <p className="text-lg">
-          Score: <strong>{correctCount}/{questions.length}</strong> ({percent}%)
-        </p>
-        <div className="space-y-4">
-          {questionsWithAnswers?.map((q) => {
-            const sub = subByQuestion.get(q.id);
-            return (
-              <div
-                key={q.id}
-                className={`border rounded-panel p-4 bg-white ${sub?.is_correct ? "border-forest" : "border-rust"}`}
-              >
-                <p className="font-medium mb-2">{q.question_text}</p>
-                <ul className="space-y-1 text-sm">
-                  {q.question_choices.map((c: any) => (
-                    <li
-                      key={c.id}
-                      className={
-                        c.is_correct
-                          ? "text-forest font-medium"
-                          : c.id === sub?.selected_choice_id
-                          ? "text-rust font-medium"
-                          : "text-ink/50"
-                      }
-                    >
-                      {c.is_correct ? "✓ " : c.id === sub?.selected_choice_id ? "✗ " : "• "}
-                      {c.choice_text}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      </main>
-    );
-  }
+  const justScored =
+    searchParams.scored && searchParams.total
+      ? { correct: Number(searchParams.scored), total: Number(searchParams.total) }
+      : null;
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-2xl mx-auto space-y-6">
       <Link href={`/courses/${course.id}`} className="text-sm text-ink/50 hover:text-gold">← Back to course</Link>
       <h1 className="text-3xl font-semibold">{course.title} — Quiz</h1>
-      {answeredIds.size > 0 && (
+
+      {justScored && (
+        <div className="border border-gold rounded-panel p-4 bg-gold/10">
+          <p className="font-medium">
+            You scored {justScored.correct}/{justScored.total} (
+            {Math.round((justScored.correct / justScored.total) * 100)}%)
+          </p>
+          <p className="text-sm text-ink/60 mt-1">
+            Saved to your grade history. Retake any time below.
+          </p>
+        </div>
+      )}
+
+      {answeredIds.size > 0 && unanswered.length > 0 && (
         <p className="text-sm text-ink/50">
-          You've already answered {answeredIds.size} question{answeredIds.size === 1 ? "" : "s"} — {unanswered.length} new question{unanswered.length === 1 ? "" : "s"} below.
+          You've already answered {answeredIds.size} question{answeredIds.size === 1 ? "" : "s"} —{" "}
+          {unanswered.length} remaining below.
         </p>
       )}
+
       <QuizForm courseId={course.id} questions={unanswered as any} />
     </main>
   );

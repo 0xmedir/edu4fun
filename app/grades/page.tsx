@@ -15,28 +15,28 @@ export default async function GradesPage() {
     .from("courses")
     .select("id, title, credit_hours");
 
-  const { data: submissions } = await supabase
-    .from("submissions")
-    .select("score, question_id, questions(course_id)")
+  // submitQuiz prunes each course down to the 10 most recent attempts, so
+  // this is already a bounded history -- no extra limit needed here.
+  const { data: grades } = await supabase
+    .from("grades")
+    .select("course_id, percent, created_at")
     .eq("user_id", user.id)
-    .not("score", "is", null);
+    .order("created_at", { ascending: true });
 
   const byCourse = new Map<string, number[]>();
-  for (const s of submissions ?? []) {
-    const courseId = (s.questions as any)?.course_id;
-    if (!courseId) continue;
-    if (!byCourse.has(courseId)) byCourse.set(courseId, []);
-    byCourse.get(courseId)!.push(s.score as number);
+  for (const g of grades ?? []) {
+    if (!byCourse.has(g.course_id)) byCourse.set(g.course_id, []);
+    byCourse.get(g.course_id)!.push(g.percent as number);
   }
 
   const rows = (courses ?? []).map((c) => {
-    const scores = byCourse.get(c.id) ?? [];
-    const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+    const attempts = byCourse.get(c.id) ?? [];
+    const avg = attempts.length ? attempts.reduce((a, b) => a + b, 0) / attempts.length : null;
     return {
       ...c,
       avg,
       letter: avg !== null ? letterForPercent(avg) : null,
-      attempted: scores.length,
+      attempts,
     };
   });
 
@@ -61,23 +61,32 @@ export default async function GradesPage() {
 
         <div className="space-y-3">
           {rows.map((r) => (
-            <div key={r.id} className="border border-line rounded-panel p-4 bg-white flex items-center justify-between">
-              <div>
-                <Link href={`/courses/${r.id}`} className="font-medium hover:text-gold">
-                  {r.title}
-                </Link>
-                <p className="text-xs text-ink/50">{r.credit_hours ?? "—"} credit hours</p>
+            <div key={r.id} className="border border-line rounded-panel p-4 bg-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Link href={`/courses/${r.id}`} className="font-medium hover:text-gold">
+                    {r.title}
+                  </Link>
+                  <p className="text-xs text-ink/50">{r.credit_hours ?? "—"} credit hours</p>
+                </div>
+                <div className="text-right">
+                  {r.avg !== null ? (
+                    <>
+                      <p className="text-2xl font-semibold font-display">{r.letter}</p>
+                      <p className="text-xs text-ink/50">
+                        {r.avg.toFixed(0)}% avg · {r.attempts.length} attempt{r.attempts.length === 1 ? "" : "s"}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-ink/40">No grades yet</p>
+                  )}
+                </div>
               </div>
-              <div className="text-right">
-                {r.avg !== null ? (
-                  <>
-                    <p className="text-2xl font-semibold font-display">{r.letter}</p>
-                    <p className="text-xs text-ink/50">{r.avg.toFixed(0)}% · {r.attempted} graded</p>
-                  </>
-                ) : (
-                  <p className="text-sm text-ink/40">No grades yet</p>
-                )}
-              </div>
+              {r.attempts.length > 1 && (
+                <p className="text-xs text-ink/40 mt-2">
+                  Progress: {r.attempts.map((a) => `${Math.round(a)}%`).join(" → ")}
+                </p>
+              )}
             </div>
           ))}
         </div>
