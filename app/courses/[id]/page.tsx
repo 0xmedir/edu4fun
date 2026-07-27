@@ -19,39 +19,22 @@ export default async function StudentCoursePage({
   if (!course) notFound();
 
   // Fetch modules
-  const { data: modules, error: modulesError } = await supabase
+  const { data: modules } = await supabase
     .from("modules")
     .select("id, title, week_number, order_index, learning_objectives, lessons(id, title)")
     .eq("course_id", course.id)
     .order("order_index", { ascending: true });
 
-  // Log to terminal for debugging
-  console.log("Modules for course", course.id, modules, modulesError);
-
-  // Check for quiz (module with order_index = 1)
-  const { data: quizModule } = await supabase
-    .from("modules")
-    .select("id")
+  // Has a quiz if this course has any published MCQ questions -- this is
+  // the real quiz data (questions -> question_choices -> answer_keys,
+  // linked by course_id). There's no separate quizzes table involved.
+  const { count: quizQuestionCount } = await supabase
+    .from("questions")
+    .select("id", { count: "exact", head: true })
     .eq("course_id", course.id)
-    .eq("order_index", 1)
-    .maybeSingle();
+    .eq("type", "mcq");
 
-  let hasQuiz = false;
-  if (quizModule) {
-    const { data: quiz } = await supabase
-      .from("quizzes")
-      .select("id")
-      .eq("module_id", quizModule.id)
-      .maybeSingle();
-    if (quiz) {
-      const { count } = await supabase
-        .from("quiz_questions")
-        .select("id", { count: "exact", head: true })
-        .eq("quiz_id", quiz.id);
-      hasQuiz = (count ?? 0) > 0;
-      console.log("Quiz found, questions:", count);
-    }
-  }
+  const hasQuiz = (quizQuestionCount ?? 0) > 0;
 
   return (
     <>
